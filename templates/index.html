@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>amis admin</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <!-- <link rel="stylesheet" title="default" href="https://unpkg.com/amis@beta/sdk/sdk.css"/> -->
+    <!-- <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/helper.css"/> -->
+    <!-- <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/iconfont.css" /> -->
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sdk.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/helper.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/iconfont.css') }}" />
+
+
+    <!-- <script src="https://unpkg.com/amis@beta/sdk/sdk.js"></script>
+    <script src="https://unpkg.com/vue@2"></script>
+    <script src="https://unpkg.com/history@4.10.1/umd/history.js"></script> -->
+
+    <script src="{{ url_for('static', filename='js/sdk.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vue.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/exceljs.js') }}"></script>
+    <style>
+      html,
+      body,
+      .app-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .header-right {
+        float: right
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" class="app-wrapper" style="display: none;"></div>
+    <script>
+      (function () {
+        let amis = amisRequire('amis/embed');
+        const match = amisRequire('path-to-regexp').match;
+
+        // 如果想用 browserHistory 请切换下这处代码, 其他不用变
+        // const history = History.createBrowserHistory();
+        const history = History.createHashHistory();
+
+        const app = {
+          type: 'app',
+          brandName: '{{ title }}',
+          logo: "{{ url_for('static', filename='/public/logo.png') }}",
+          header: {
+            // type: 'tpl',
+            // inline: false,
+            // className: 'w-full',
+            // tpl: '<div class="flex justify-between"><div>顶部区域左侧</div><div>顶部区域右侧</div></div>'
+
+              "type": "page",
+              "initApi": {
+                  'method': 'get',
+                  'url': "/admin/user/info",
+                  adaptor: function (payload, response) {
+                      if (payload.code == 200) {
+                          // 初始化，如果请求成功，则显示，否则不显示
+                          document.getElementById("root").style.display='';
+                      }
+                      return payload
+                  },
+              },
+              "body": {
+                "type": "dropdown-button",
+                "label": "${current_user}",
+                "icon": "fas fa-user",
+                "rightIcon": "fa fa-ellipsis-v",
+                "hideCaret": true,
+                "className": "header-right",
+                "buttons": [
+                  {
+                    "type": "button",
+                    "icon": "fas fa-key",
+                    "label": "修改密码",
+                    "actionType": "drawer",
+                    "drawer": {
+                      "position": "right",
+                      "resizable": true,
+                      "closeOnOutside": true,
+                      "size": "md",
+                      "title": "修改密码",
+                      "body": {
+                                "type": "form",
+                                "name": "sample-edit-form",
+                                "api": {
+                                        "method": "put",
+                                        "url": "/admin/user/password",
+                                        // 只提交修改的数据
+                                        "data": {
+                                                "oldPassword":    "${oldPassword}",
+                                                "newPassword":    "${newPassword}",
+                                                "repeatPassword": "${repeatPassword}"
+                                        }
+                                },
+
+                                "rules": [
+                                        {
+                                                // 规则必须两次密码相等
+                                                "rule": "data.newPassword == data.repeatPassword",
+                                                "message": "两次密码不一致",
+                                                "name": [
+                                                        "newPassword",
+                                                        "repeatPassword"
+                                                ]
+                                        }
+                                ],
+                                "body": [
+                                          {
+                                                    "type": "input-password",
+                                                    "name": "oldPassword",
+                                                    "label": "旧密码",
+                                                    "required": true,
+                                          },
+                                          {
+                                                    "type": "divider"
+                                          },
+                                          {
+                                                    "type": "input-password",
+                                                    "name": "newPassword",
+                                                    "label": "新密码",
+                                                    "required": true,
+
+                                                    // 输入框验证规则
+                                                    "validations": {
+                                                            // 'isRequired': true,
+                                                            'minLength': 1,
+                                                            'maxLength': 100,
+                                                    },
+                                                    "validationErrors": {
+                                                            "minLength": "同学，最少输入$1以上的数字哈",
+                                                            "maxLength": "同学，最多输入$1以上的数字哈",
+                                                    },
+                                            },
+                                            {
+                                                    "type": "divider"
+                                            },
+                                            {
+                                                    "type": "input-password",
+                                                    "name": "repeatPassword",
+                                                    "label": "确认密码",
+                                                    "required": true,
+
+                                                    // 输入框验证规则
+                                                    "validations": {
+                                                            // 'isRequired': true,
+                                                            'minLength': 1,
+                                                            'maxLength': 100,
+                                                    },
+                                                    "validationErrors": {
+                                                            "minLength": "同学，最少输入$1以上的数字哈",
+                                                            "maxLength": "同学，最多输入$1以上的数字哈",
+                                                    },
+                                            },
+
+                                        ]
+                      }
+
+
+
+
+
+                    }
+                  },
+                  {
+                    "type": "button",
+                    "icon": "fas fa-sign-out-alt",
+                    "label": "退出",
+                    "onEvent": {
+                      "click": {
+                        "actions": [
+                          {
+                            "actionType": "ajax",
+                            "args": {
+                              "api": {
+                                "url": "/admin/logout",
+                                "method": "delete"
+                              },
+                            },
+                          },
+                          {
+                            "actionType": "custom",
+                            "script": "return (callback) => { setTimeout(() => {localStorage.clear(); location.href = '/admin/login';callback();}, 1000) };",
+                            "expression": "${event.data.responseResult.responseData.code === 201}",
+                          }
+                        ]
+                      }
+                    }
+                  },
+                ]
+              }
+
+
+          },
+          // footer: '<div class="p-2 text-center bg-light">底部区域</div>',
+          // asideBefore: '<div class="p-2 text-center">菜单前面区域</div>',
+          // asideAfter: '<div class="p-2 text-center">菜单后面区域</div>',
+          api: {
+            "method": "get",
+            'url':'/admin/temp/menu',
+          }
+        };
+
+        function normalizeLink(to, location = history.location) {
+          to = to || '';
+
+          if (to && to[0] === '#') {
+            to = location.pathname + location.search + to;
+          } else if (to && to[0] === '?') {
+            to = location.pathname + to;
+          }
+
+          const idx = to.indexOf('?');
+          const idx2 = to.indexOf('#');
+          let pathname = ~idx
+            ? to.substring(0, idx)
+            : ~idx2
+            ? to.substring(0, idx2)
+            : to;
+          let search = ~idx ? to.substring(idx, ~idx2 ? idx2 : undefined) : '';
+          let hash = ~idx2 ? to.substring(idx2) : location.hash;
+
+          if (!pathname) {
+            pathname = location.pathname;
+          } else if (pathname[0] != '/' && !/^https?\:\/\//.test(pathname)) {
+            let relativeBase = location.pathname;
+            const paths = relativeBase.split('/');
+            paths.pop();
+            let m;
+            while ((m = /^\.\.?\//.exec(pathname))) {
+              if (m[0] === '../') {
+                paths.pop();
+              }
+              pathname = pathname.substring(m[0].length);
+            }
+            pathname = paths.concat(pathname).join('/');
+          }
+
+          return pathname + search + hash;
+        }
+
+        function isCurrentUrl(to, ctx) {
+          if (!to) {
+            return false;
+          }
+          const pathname = history.location.pathname;
+          const link = normalizeLink(to, {
+            ...location,
+            pathname,
+            hash: ''
+          });
+
+          if (!~link.indexOf('http') && ~link.indexOf(':')) {
+            let strict = ctx && ctx.strict;
+            return match(link, {
+              decode: decodeURIComponent,
+              strict: typeof strict !== 'undefined' ? strict : true
+            })(pathname);
+          }
+
+          return decodeURI(pathname) === link;
+        }
+
+        let amisInstance = amis.embed(
+          '#root',
+          app,
+          {
+            location: history.location
+          },
+          {
+
+            // 设置全局请求适配器
+            requestAdaptor(api) {
+              // console.log('请求适配器:',api)
+              // api.headers['Authorization'] = 'Bearer ' + localStorage.getItem('X-Token')
+              
+              api.headers['X-Token'] = localStorage.getItem('X-Token')
+              
+              // if(api.url.indexOf('/api') > -1) {
+              //   api.url = "http://10.11.9.247" + api.url
+              // }
+              
+              // return api;
+            },
+
+            // 设置全局接受适配器
+            responseAdaptor(api, payload, query, request, response) {
+              // console.log(api, payload, query, request, response)
+              // console.log("接受适配器:",response)
+              if(response.data.code == 401 ){
+                setTimeout(
+                  "localStorage.clear(); location.href = '/admin/login'"
+                ,500)
+
+              }
+              return payload;
+            },
+
+
+            // watchRouteChange: fn => {
+            //   return history.listen(fn);
+            // },
+            updateLocation: (location, replace) => {
+              location = normalizeLink(location);
+              if (location === 'goBack') {
+                return history.goBack();
+              } else if (
+                (!/^https?\:\/\//.test(location) &&
+                  location ===
+                    history.location.pathname + history.location.search) ||
+                location === history.location.href
+              ) {
+                // 目标地址和当前地址一样，不处理，免得重复刷新
+                return;
+              } else if (/^https?\:\/\//.test(location) || !history) {
+                return (window.location.href = location);
+              }
+
+              history[replace ? 'replace' : 'push'](location);
+            },
+            jumpTo: (to, action) => {
+              if (to === 'goBack') {
+                return history.goBack();
+              }
+
+              to = normalizeLink(to);
+
+              if (isCurrentUrl(to)) {
+                return;
+              }
+
+              if (action && action.actionType === 'url') {
+                action.blank === false
+                  ? (window.location.href = to)
+                  : window.open(to, '_blank');
+                return;
+              } else if (action && action.blank) {
+                window.open(to, '_blank');
+                return;
+              }
+
+              if (/^https?:\/\//.test(to)) {
+                window.location.href = to;
+              } else if (
+                (!/^https?\:\/\//.test(to) &&
+                  to === history.pathname + history.location.search) ||
+                to === history.location.href
+              ) {
+                // do nothing
+              } else {
+                history.push(to);
+              }
+            },
+            isCurrentUrl: isCurrentUrl,
+            theme: 'cxd'
+          }
+        );
+
+        history.listen(state => {
+          amisInstance.updateProps({
+            location: state.location || state
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

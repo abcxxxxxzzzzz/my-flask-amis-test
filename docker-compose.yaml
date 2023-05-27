@@ -1,0 +1,74 @@
+version: "3.5"
+services:
+    redis:
+        container_name: redis
+        image: "redis:alpine"
+        restart: always
+        networks:
+            - local-net
+        expose:
+            - "6379"
+        # ports:
+        #     - target: 6379
+        #       published: 63790
+    mysql:
+        container_name: mysql
+        image: mysql:5.7
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci #设置utf8字符集
+        restart: always
+        networks:
+            - local-net
+        environment:
+            TZ: Asia/Shanghai
+            MYSQL_DATABASE: 'flask'
+            MYSQL_USER: 'flask'
+            MYSQL_PASSWORD: 'flask'
+            MYSQL_ROOT_PASSWORD: ''
+            MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+        expose:
+            - "3306"
+        #ports:
+        #    - target: 3306
+        #      published: 33060
+        volumes:
+            - type: volume
+              source: local-vol
+              target: /mysql
+    app:
+        container_name: app
+        build: .
+        networks:
+            - local-net
+        expose:
+            - "8000"
+        #ports:
+        #    - target: 8000
+        #      published: 8000
+        volumes:
+            - .:/app
+        depends_on:
+            - redis
+            - mysql
+            
+    nginx:
+        container_name: nginx
+        image: nginx:1.19.0-alpine
+        networks:
+            - local-net
+        ports:
+            - target: 80
+              published: 80
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+        depends_on:
+            - app
+
+# networks用于指引Docker创建新的网络。
+# 默认情况下，Docker Compose会创建bridge网络。这是一种单主机网络，只能够实现同一主机上容器的连接。
+# 当然，也可以使用driver属性来指定不同的网络类型。
+networks:
+    local-net:
+        driver: bridge
+
+volumes:
+    local-vol:

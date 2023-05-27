@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>amis demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sdk.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/helper.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/iconfont.css') }}" />
+
+
+    <!-- <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/sdk.css" />
+    <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/helper.css" />
+    <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/iconfont.css" /> -->
+
+    <!-- 这是默认主题所需的，如果是其他主题则不需要 -->
+    <!-- 从 1.1.0 开始 sdk.css 将不支持 IE 11，如果要支持 IE11 请引用这个 css，并把前面那个删了 -->
+    <!-- <link rel="stylesheet" href="sdk-ie11.css" /> -->
+    <!-- 不过 amis 开发团队几乎没测试过 IE 11 下的效果，所以可能有细节功能用不了，如果发现请报 issue -->
+    <style>
+        html,
+        body,
+        .app-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+  <script type="text/javascript">
+    var _exist = localStorage.getItem('X-Token');
+    console.log(_exist)
+    if (_exist.length !== 0) {
+      window.location.href = "/admin/temp/index"
+      // return false
+    }
+  </script>
+</head>
+
+<body>
+    <div id="root" class="app-wrapper"></div>
+    <script src="{{ url_for('static', filename='js/sdk.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vue.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/papaparse.js') }}"></script>
+
+    <!-- <script src="https://unpkg.com/amis@beta/sdk/sdk.js"></script>
+    <script src="https://unpkg.com/vue@2"></script>
+    <script src="https://unpkg.com/history@4.10.1/umd/history.js"></script> -->
+
+
+
+    <script type="text/javascript">
+        (function () {
+            let amis = amisRequire('amis/embed');
+            const match = amisRequire('path-to-regexp').match;
+            const history = History.createHashHistory();
+
+
+            
+
+            // 通过替换下面这个配置来生成不同页面
+            let amisJSON = {
+                type: 'page',
+                // title: '表单页面',
+                body: {
+                    type: 'form',
+                    title: "{{ title }}",
+                    mode: 'horizontal',
+                    api: {
+                        method: 'post',
+                        url: "/admin/login",
+                        // dataType: "form",
+                        adaptor: function (payload, response) {
+                            if (payload.code == 200) {
+                                // 存储对象
+                                localStorage.setItem('X-Token', payload.data.token);
+                                window.location.href = "/admin/temp/index"
+                            }
+                            return payload
+                        },
+                        
+                    },
+
+
+                    // redirect: '/admin/temp/index',
+                    // redirect: '/admin/temp/index',
+                    body: [
+                        {
+                            label: '用户',
+                            type: 'input-text',
+                            name: 'username',
+                            required: true,
+                        },
+                        {
+                            label: '密码',
+                            type: 'input-password',
+                            name: 'password',
+                            required: true,
+                        },
+                        {
+                            type: "submit",
+                            label: "登录",
+                            level: "primary",
+                        //     onEvent: {
+                        //         click: {
+                        //             actions: [
+                        //                 {
+                        //                     "actionType": "ajax",
+                        //                     "args": {
+                        //                             "api": {
+                        //                             "url": "/auth/login",
+                        //                             "method": "post"
+                        //                         },
+                        //                     },
+                        //                     "data": {
+                        //                         "username": "${username}",
+                        //                         "password": "${password}"
+                        //                     },
+                        //                 },
+
+                        //             ]
+                        //         }
+                        // }
+                        }
+                    ]
+                }
+            };
+
+        function normalizeLink(to, location = history.location) {
+          to = to || '';
+
+          if (to && to[0] === '#') {
+            to = location.pathname + location.search + to;
+          } else if (to && to[0] === '?') {
+            to = location.pathname + to;
+          }
+
+          const idx = to.indexOf('?');
+          const idx2 = to.indexOf('#');
+          let pathname = ~idx
+            ? to.substring(0, idx)
+            : ~idx2
+            ? to.substring(0, idx2)
+            : to;
+          let search = ~idx ? to.substring(idx, ~idx2 ? idx2 : undefined) : '';
+          let hash = ~idx2 ? to.substring(idx2) : location.hash;
+
+          if (!pathname) {
+            pathname = location.pathname;
+          } else if (pathname[0] != '/' && !/^https?\:\/\//.test(pathname)) {
+            let relativeBase = location.pathname;
+            const paths = relativeBase.split('/');
+            paths.pop();
+            let m;
+            while ((m = /^\.\.?\//.exec(pathname))) {
+              if (m[0] === '../') {
+                paths.pop();
+              }
+              pathname = pathname.substring(m[0].length);
+            }
+            pathname = paths.concat(pathname).join('/');
+          }
+
+          return pathname + search + hash;
+        }
+
+        function isCurrentUrl(to, ctx) {
+          if (!to) {
+            return false;
+          }
+          const pathname = history.location.pathname;
+          const link = normalizeLink(to, {
+            ...location,
+            pathname,
+            hash: ''
+          });
+
+          if (!~link.indexOf('http') && ~link.indexOf(':')) {
+            let strict = ctx && ctx.strict;
+            return match(link, {
+              decode: decodeURIComponent,
+              strict: typeof strict !== 'undefined' ? strict : true
+            })(pathname);
+          }
+
+          return decodeURI(pathname) === link;
+        }
+
+        let amisInstance = amis.embed(
+          '#root',
+          amisJSON,
+          {
+            location: history.location
+          },
+          {
+
+
+            watchRouteChange: fn => {
+              return history.listen(fn);
+            },
+            updateLocation: (location, replace) => {
+              location = normalizeLink(location);
+              if (location === 'goBack') {
+                return history.goBack();
+              } else if (
+                (!/^https?\:\/\//.test(location) &&
+                  location ===
+                    history.location.pathname + history.location.search) ||
+                location === history.location.href
+              ) {
+                // 目标地址和当前地址一样，不处理，免得重复刷新
+                return;
+              } else if (/^https?\:\/\//.test(location) || !history) {
+                return (window.location.href = location);
+              }
+
+              history[replace ? 'replace' : 'push'](location);
+            },
+            jumpTo: (to, action) => {
+              if (to === 'goBack') {
+                return history.goBack();
+              }
+
+              to = normalizeLink(to);
+
+              if (isCurrentUrl(to)) {
+                return;
+              }
+
+              if (action && action.actionType === 'url') {
+                action.blank === false
+                  ? (window.location.href = to)
+                  : window.open(to, '_blank');
+                return;
+              } else if (action && action.blank) {
+                window.open(to, '_blank');
+                return;
+              }
+
+              if (/^https?:\/\//.test(to)) {
+                window.location.href = to;
+              } else if (
+                (!/^https?\:\/\//.test(to) &&
+                  to === history.pathname + history.location.search) ||
+                to === history.location.href
+              ) {
+                // do nothing
+              } else {
+                history.push(to);
+              }
+            },
+            isCurrentUrl: isCurrentUrl,
+            theme: 'cxd'
+          }
+        );
+
+        history.listen(state => {
+          amisInstance.updateProps({
+            location: state.location || state
+          });
+        });
+
+
+
+
+        })();
+    </script>
+
+  
+</body>
+
+</html>
+
+<style>
+/* 登录背景图 */
+.amis-scope .cxd-Page-main {
+    /* background-image: url(./public/lg.png); */
+    /* background-color: aliceblue; */
+    background-repeat:no-repeat;
+    /* background-attachment:fixed;
+    background-position:center; */
+    background-size: 100% 100%;
+    background-position:center;
+}
+
+
+
+/* 居中样式修改 */
+.amis-scope .cxd-Panel--default {
+    border-radius: 15px;
+    background-clip: padding-box;
+    margin: 180px auto;
+    /* margin: 15% 0px 0px 70%; */
+    width: 350px;
+    padding: 35px 35px 35px 35px;
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 0 25px #cacaca;
+    box-sizing: border-box;
+}
+
+/*  表单登录栏样式修改 */
+.amis-scope .cxd-Panel--default > .cxd-Panel-heading {
+    background: none !important;
+    text-align: center;
+}
+
+/* 表单登录字体样式修改 */
+.amis-scope .cxd-Panel-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* 表单用户密码样式修改 */
+.amis-scope .cxd-Form-item--horizontal {
+    margin-left: calc(var(--Form--horizontal-gutterWidth) / 2 * -8);
+    margin-right: calc(var(--Form--horizontal-gutterWidth) / 2 * -1);
+}
+
+/* 提交按钮 */
+.amis-scope .cxd-Button--size-default {
+    width: 100%;
+}

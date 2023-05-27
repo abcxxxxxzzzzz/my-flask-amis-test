@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>amis demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/sdk.css" />
+    <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/helper.css" />
+    <link rel="stylesheet" href="https://unpkg.com/amis@beta/sdk/iconfont.css" />
+    <!-- 这是默认主题所需的，如果是其他主题则不需要 -->
+    <!-- 从 1.1.0 开始 sdk.css 将不支持 IE 11，如果要支持 IE11 请引用这个 css，并把前面那个删了 -->
+    <!-- <link rel="stylesheet" href="sdk-ie11.css" /> -->
+    <!-- 不过 amis 开发团队几乎没测试过 IE 11 下的效果，所以可能有细节功能用不了，如果发现请报 issue -->
+    <style>
+        html,
+        body,
+        .app-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root" class="app-wrapper"></div>
+    <script src="https://unpkg.com/amis@beta/sdk/sdk.js"></script>
+    <script src="https://unpkg.com/vue@2"></script>
+    <script src="https://unpkg.com/history@4.10.1/umd/history.js"></script>
+    <script type="text/javascript">
+        (function () {
+            let amis = amisRequire('amis/embed');
+            // 通过替换下面这个配置来生成不同页面
+            let amisJSON = {
+                type: 'page',
+                // title: '表单页面',
+                body: {
+                    type: 'form',
+                    title: '通用后台',
+                    mode: 'horizontal',
+                    api: {
+                        method: 'post',
+                        url: "/auth/login",
+                        // dataType: "form",
+                        adaptor: function (payload, response) {
+                            if (payload.code == 200) {
+                                // 存储对象
+                                localStorage.setItem('X-Token', payload.data.token);
+                                // window.location = '/admin/temp/index'
+                                // var oA = document.createElement('a'); 
+                                // oA.href = '/admin/temp/index'; 
+                                // // oA.target = '_blank';
+                                // oA.click();
+                            }
+                            return payload
+                        },
+                        
+                    },
+                    redirect: '/admin/temp/index',
+                    body: [
+                        {
+                            label: '用户',
+                            type: 'input-text',
+                            name: 'username',
+                            required: true,
+                        },
+                        {
+                            label: '密码',
+                            type: 'input-password',
+                            name: 'password',
+                            required: true,
+                        },
+                        {
+                            type: "submit",
+                            label: "登录",
+                            level: "primary",
+                        //     onEvent: {
+                        //         click: {
+                        //             actions: [
+                        //                 {
+                        //                     "actionType": "ajax",
+                        //                     "args": {
+                        //                             "api": {
+                        //                             "url": "/auth/login",
+                        //                             "method": "post"
+                        //                         },
+                        //                         // "messages": {
+                        //                         //     "success": "成功了！欧耶",
+                        //                         //     "failed": "失败了呢。。"
+                        //                         // }
+                        //                     },
+                        //                     "data": {
+                        //                         "username": "${username}",
+                        //                         "password": "${password}"
+                        //                     }
+                        //                 },
+                        //             ]
+                        //         }
+                        // }
+                            
+
+
+
+                        }
+                    ]
+                }
+            };
+            let amisScoped = amis.embed('#root', amisJSON, {
+                theme: 'cxd'
+            },
+            // {
+            //    // 设置全局请求适配器
+            //    requestAdaptor(api) {
+            //     api.headers['X-Token'] = localStorage.getItem('X-Token')
+            //     },
+            // },
+            {
+                       // 设置全局接受适配器
+                 responseAdaptor(api, payload, query, request, response) {
+                // console.log("接受适配器:",response)
+                if(response.data.code == 401 ){
+                    setTimeout(
+                    "localStorage.clear(); location.href = '/auth/login'"
+                    ,500)
+
+                }
+                return payload;
+                },
+            }
+
+            
+            );
+        })();
+    </script>
+</body>
+
+</html>
+
+<style>
+/* 登录背景图 */
+.amis-scope .cxd-Page-main {
+    /* background-image: url(./public/lg.png); */
+    /* background-color: aliceblue; */
+    background-repeat:no-repeat;
+    /* background-attachment:fixed;
+    background-position:center; */
+    background-size: 100% 100%;
+    background-position:center;
+}
+
+
+
+/* 居中样式修改 */
+.amis-scope .cxd-Panel--default {
+    border-radius: 15px;
+    background-clip: padding-box;
+    margin: 180px auto;
+    /* margin: 15% 0px 0px 70%; */
+    width: 350px;
+    padding: 35px 35px 35px 35px;
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 0 25px #cacaca;
+    box-sizing: border-box;
+}
+
+/*  表单登录栏样式修改 */
+.amis-scope .cxd-Panel--default > .cxd-Panel-heading {
+    background: none !important;
+    text-align: center;
+}
+
+/* 表单登录字体样式修改 */
+.amis-scope .cxd-Panel-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* 表单用户密码样式修改 */
+.amis-scope .cxd-Form-item--horizontal {
+    margin-left: calc(var(--Form--horizontal-gutterWidth) / 2 * -8);
+    margin-right: calc(var(--Form--horizontal-gutterWidth) / 2 * -1);
+}
+
+/* 提交按钮 */
+.amis-scope .cxd-Button--size-default {
+    width: 100%;
+}
